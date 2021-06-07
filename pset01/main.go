@@ -21,6 +21,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -109,8 +110,7 @@ func HexToPubkey(s string) (PublicKey, error) {
 
 	// first, make sure hex string is of correct length
 	if len(s) != expectedLength {
-		return p, fmt.Errorf(
-			"Pubkey string %d characters, expect %d", expectedLength)
+		return p, fmt.Errorf("Pubkey string %d characters, expect %d", len(s), expectedLength)
 	}
 
 	// decode from hex to a byte slice
@@ -187,8 +187,7 @@ func HexToSignature(s string) (Signature, error) {
 
 	// first, make sure hex string is of correct length
 	if len(s) != expectedLength {
-		return sig, fmt.Errorf(
-			"Pubkey string %d characters, expect %d", expectedLength)
+		return sig, fmt.Errorf("Pubkey string %d characters, expect %d", len(s), expectedLength)
 	}
 
 	// decode from hex to a byte slice
@@ -223,6 +222,28 @@ func GenerateKey() (SecretKey, PublicKey, error) {
 	// Your code here
 	// ===
 
+	for i := range sec.ZeroPre {
+		b := make([]byte, len(sec.ZeroPre[i]))
+		_, err := rand.Read(b)
+		sec.ZeroPre[i] = BlockFromByteSlice(b)
+		pub.ZeroHash[i] = sec.ZeroPre[i].Hash()
+		if err != nil {
+			fmt.Println("error:", err)
+			return sec, pub, err
+		}
+	}
+
+	for i := range sec.OnePre {
+		b := make([]byte, len(sec.OnePre[i]))
+		_, err := rand.Read(b)
+		sec.OnePre[i] = BlockFromByteSlice(b)
+		pub.OneHash[i] = sec.OnePre[i].Hash()
+		if err != nil {
+			fmt.Println("error:", err)
+			return sec, pub, err
+		}
+	}
+
 	// ===
 	return sec, pub, nil
 }
@@ -234,6 +255,18 @@ func Sign(msg Message, sec SecretKey) Signature {
 	// Your code here
 	// ===
 
+	bitCount := 0
+	for _, b := range msg {
+		for i := 7; i >= 0; i-- {
+			mask := byte(1 << uint(i))
+			if (b & mask) == 0 {
+				sig.Preimage[bitCount] = sec.ZeroPre[bitCount]
+			} else {
+				sig.Preimage[bitCount] = sec.OnePre[bitCount]
+			}
+			bitCount++
+		}
+	}
 	// ===
 	return sig
 }
@@ -244,6 +277,19 @@ func Verify(msg Message, pub PublicKey, sig Signature) bool {
 
 	// Your code here
 	// ===
+
+	bitCount := 0
+	for _, b := range msg {
+		for i := 7; i >= 0; i-- {
+			mask := byte(1 << uint(i))
+			if (b&mask) == 0 && sig.Preimage[bitCount].Hash() != pub.ZeroHash[bitCount] {
+				return false
+			} else if (b&mask) != 0 && sig.Preimage[bitCount].Hash() != pub.OneHash[bitCount] {
+				return false
+			}
+			bitCount++
+		}
+	}
 
 	// ===
 
