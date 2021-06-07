@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 /*
 A note about the provided keys and signatures:
@@ -119,12 +121,97 @@ func Forge() (string, Signature, error) {
 	fmt.Printf("ok 3: %v\n", Verify(msgslice[2], pub, sig3))
 	fmt.Printf("ok 4: %v\n", Verify(msgslice[3], pub, sig4))
 
-	msgString := "my forged message"
+	msgString := "forge amiune@gmail.com"
 	var sig Signature
 
 	// your code here!
 	// ==
-	// Geordi La
+
+	sigs := [4]Signature{sig1, sig2, sig3, sig4}
+	var secZeroFound [256]bool
+	var secOneFound [256]bool
+	//
+
+	//Get preimage secrect keys for each signature
+	var sec SecretKey
+
+	for n := 0; n < 4; n++ {
+		bitCount := 0
+		for _, b := range msgslice[n] {
+			for i := 7; i >= 0; i-- {
+				mask := byte(1 << uint(i))
+				if (b & mask) == 0 {
+					sec.ZeroPre[bitCount] = sigs[n].Preimage[bitCount]
+					secZeroFound[bitCount] = true
+				} else {
+					sec.OnePre[bitCount] = sigs[n].Preimage[bitCount]
+					secOneFound[bitCount] = true
+				}
+				bitCount++
+			}
+		}
+	}
+
+	//Create a message that reduces the secret keys to find
+	/*
+		start := time.Now()
+		minSKToFind := 256
+		for i := 0; i < 9000000000; i++ {
+			tmpMessageString := msgString + " " + strconv.Itoa(i)
+			msg := GetMessageFromString(tmpMessageString)
+			countMissingSKBlocks := 0
+			bitCount := 0
+			for _, b := range msg {
+				for i := 7; i >= 0; i-- {
+					mask := byte(1 << uint(i))
+					if (b&mask) == 0 && !secZeroFound[bitCount] {
+						countMissingSKBlocks++
+					} else if (b&mask) != 0 && !secOneFound[bitCount] {
+						countMissingSKBlocks++
+					}
+					if countMissingSKBlocks >= minSKToFind {
+						break
+					}
+					bitCount++
+				}
+				if countMissingSKBlocks >= minSKToFind {
+					break
+				}
+			}
+			if countMissingSKBlocks < minSKToFind {
+				minSKToFind = countMissingSKBlocks
+				fmt.Printf("%s: %d => ", tmpMessageString, countMissingSKBlocks)
+				elapsed := time.Since(start)
+				fmt.Printf("Found in %f seconds\n", elapsed.Seconds())
+				if minSKToFind == 0 {
+					break
+				}
+			}
+			if i%100000000 == 0 {
+				elapsed := time.Since(start)
+				fmt.Printf("Tried %d combinations in  %f seconds\n", i, elapsed.Seconds())
+			}
+		}
+		//*/
+	//forge amiune@gmail.com 1793084318: 0 => Found in 692.082718 seconds
+
+	//Create signature
+
+	msgString = "forge amiune@gmail.com 1793084318"
+	msg := GetMessageFromString(msgString)
+
+	bitCount := 0
+	for _, b := range msg {
+		for i := 7; i >= 0; i-- {
+			mask := byte(1 << uint(i))
+			if (b & mask) == 0 {
+				sig.Preimage[bitCount] = sec.ZeroPre[bitCount]
+			} else if (b & mask) != 0 {
+				sig.Preimage[bitCount] = sec.OnePre[bitCount]
+			}
+			bitCount++
+		}
+	}
 	// ==
 
 	return msgString, sig, nil
