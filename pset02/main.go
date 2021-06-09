@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 )
 
@@ -74,13 +76,28 @@ func main() {
 
 	fmt.Printf("NameChain Miner v0.1\n")
 
-	// Your code here!
+	// If the file doesn't exist, create it or append to the file
+	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(file)
+	log.Println("Initialize miner...")
 
+	// Your code here!
 	// Basic idea:
 	// Get tip from server, mine a block pointing to that tip,
 	// then submit to server.
-	// To reduce stales, poll the server every so often and update the
+	// To reduce stales, poll the server every so gooften and update the
 	// tip you're mining off of if it has changed.
+	for {
+		tipBlock, err := GetTipFromServer()
+		if err == nil {
+			fmt.Printf("Start mining...\n")
+			tipBlock.Mine(33)
+		} else {
+			fmt.Printf("Error: %s\n", err)
+		}
+	}
 
-	return
 }
