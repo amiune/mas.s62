@@ -34,7 +34,7 @@ func EZTxBuilder() *wire.MsgTx {
 	// since txids are unique, this will not be replayable.  pick a tx output
 	// that has not yet been consumed by someone else.
 
-	hashStr := "" // put the input txid here
+	hashStr := "1f497ac245eb25cd94157c290f62d042e3bdda1e57920b6d1d2c5cfa362c12da" // put the input txid here
 
 	// it'll work
 	// also note that in bitcoin, all the 32-byte strings are displayed backwards.
@@ -45,7 +45,7 @@ func EZTxBuilder() *wire.MsgTx {
 	}
 	// let's try to spend output index 7
 	outPoint := wire.NewOutPoint(
-		outpointTxid, 0) // replace 0 with the output you want to spend
+		outpointTxid, 40) // replace 0 with the output you want to spend
 
 	// create the TxIn, with empty sigscript field
 	input := wire.NewTxIn(outPoint, nil, nil)
@@ -57,7 +57,7 @@ func EZTxBuilder() *wire.MsgTx {
 	// Put your wallet address as a string here, and it will be decoded into a 20-byte
 	// hash.  That hash is used in the standard "pay to pubkey hash" (p2pkh) script
 
-	sendToAddressString := "" // put the address you're sending to here
+	sendToAddressString := "mnMEoorvojs62PziUdsjJtPwdiDDJY4yo4" // put the address you're sending to here
 	sendToAddress, err := btcutil.DecodeAddress(sendToAddressString, testnet3Parameters)
 	if err != nil {
 		panic(err)
@@ -66,13 +66,16 @@ func EZTxBuilder() *wire.MsgTx {
 	// this builds an output script.
 
 	sendToScript, err := txscript.PayToAddrScript(sendToAddress)
+	if err != nil {
+		panic(err)
+	}
 
 	// amounts in bitcoin are integers, but "one bitcoin" is actually 100 million of the
 	// base unit, often called "satoshis".  If the output amount is greater than the
 	// input amount, the transaction is invalid (because it's creating more coins)
 	// ( this check is performed over the sum of the inputs and outputs.  There is an
 	// exception for the coinbase transaction.)
-	output := wire.NewTxOut(0, sendToScript) // replace 0 with the output value
+	output := wire.NewTxOut(0.000321*100_000_000, sendToScript) // replace 0 with the output value
 
 	// put the inputs and outputs into the transaction
 
@@ -82,8 +85,7 @@ func EZTxBuilder() *wire.MsgTx {
 	// the transaction now has the inputs and outputs, but is missing the signature.
 	// We need a private key to sign with
 	// Hash any phrase to make a private key
-	phraseHash := chainhash.DoubleHashB([]byte("secret phrase here"))
-
+	phraseHash := chainhash.DoubleHashB([]byte("mas.s62"))
 	// make a new private key struct.  Private key structs also have a pubkey in them
 	priv, _ := btcec.PrivKeyFromBytes(btcec.S256(), phraseHash)
 
@@ -91,13 +93,16 @@ func EZTxBuilder() *wire.MsgTx {
 	// we also need the script from the previous transaction.  This is redundant as it
 	// is covered by the txid
 
-	prevAddressString := "" // put the address you're sending "from" here
+	prevAddressString := "mpQQryVrYmGNPxVqNeE5RgoYAv2v66Psao" // put the address you're sending "from" here
 	prevAddress, err := btcutil.DecodeAddress(prevAddressString, testnet3Parameters)
 	if err != nil {
 		panic(err)
 	}
 
 	spendFromScript, err := txscript.PayToAddrScript(prevAddress)
+	if err != nil {
+		panic(err)
+	}
 
 	// SignatureScript takes a bunch of arguments.  In this case:
 	// tx: transaction itself

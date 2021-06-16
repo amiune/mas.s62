@@ -19,7 +19,7 @@ func OpReturnTxBuilder() *wire.MsgTx {
 	tx := wire.NewMsgTx(2)
 
 	// put the input txid here (your own)
-	hashStr := ""
+	hashStr := "1ebff60e2230d11cd9e0a8dff735c30f43c9ff9d46ceed685bfe3ce6c6246952" //from faucet
 
 	outpointTxid, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
@@ -37,7 +37,7 @@ func OpReturnTxBuilder() *wire.MsgTx {
 
 	// Put a message here with your name or MIT ID number so I can find your
 	// submission on the blockchain.
-	opReturnData := []byte("your message here")
+	opReturnData := []byte("Hola soy Herni")
 	// build the op_return output script
 	// this is the OP_RETURN opcode, followed by a data push opcode, then the data.
 	opReturnScript, err :=
@@ -52,7 +52,7 @@ func OpReturnTxBuilder() *wire.MsgTx {
 	// next, build the pubkey hash output.  This the same as before in the EZ function.
 	// put the address you're sending to here.  It's the same as the address you're
 	// spending from!
-	sendToAddressString := ""
+	sendToAddressString := "mnMEoorvojs62PziUdsjJtPwdiDDJY4yo4"
 	sendToAddress, err := btcutil.DecodeAddress(sendToAddressString, testnet3Parameters)
 	if err != nil {
 		panic(err)
@@ -65,7 +65,7 @@ func OpReturnTxBuilder() *wire.MsgTx {
 
 	// put a bit less than your input amount, so that there is a fee for the miners
 	// this will ensure miners put your transaction in a block.
-	p2pkhOutput := wire.NewTxOut(123450000, sendToScript)
+	p2pkhOutput := wire.NewTxOut((0.00100-0.00020)*100_000_000, sendToScript)
 
 	// put the tx together, 1 input, 2 outputs.
 	tx.AddTxIn(input)
@@ -75,8 +75,11 @@ func OpReturnTxBuilder() *wire.MsgTx {
 	// finally we need to sign.  Same as EZ func.
 	// we already know the address you're sending from
 	spendFromScript, err := txscript.PayToAddrScript(sendToAddress)
+	if err != nil {
+		panic(err)
+	}
 
-	phraseHash := chainhash.DoubleHashB([]byte("private key here"))
+	phraseHash := chainhash.DoubleHashB([]byte("Herni34wfDFas4faSdg4gjgfy7"))
 	priv, _ := btcec.PrivKeyFromBytes(btcec.S256(), phraseHash)
 
 	pubSig, err := txscript.SignatureScript(
