@@ -103,12 +103,6 @@ func Forge() (string, Signature, error) {
 		panic(err)
 	}
 
-	var sigslice []Signature
-	sigslice = append(sigslice, sig1)
-	sigslice = append(sigslice, sig2)
-	sigslice = append(sigslice, sig3)
-	sigslice = append(sigslice, sig4)
-
 	var msgslice []Message
 
 	msgslice = append(msgslice, GetMessageFromString("1"))
@@ -156,14 +150,14 @@ func Forge() (string, Signature, error) {
 	/*
 		start := time.Now()
 		minSKToFind := 256
-		for i := 0; i < 9000000000; i++ {
-			tmpMessageString := msgString + " " + strconv.Itoa(i)
+		for rand := 0; rand < 9000000000; rand++ {
+			tmpMessageString := msgString + " " + strconv.Itoa(rand)
 			msg := GetMessageFromString(tmpMessageString)
 			countMissingSKBlocks := 0
 			bitCount := 0
 			for _, b := range msg {
 				for i := 7; i >= 0; i-- {
-					mask := byte(1 << uint(i))
+					mask := byte(1 << i)
 					if (b&mask) == 0 && !secZeroFound[bitCount] {
 						countMissingSKBlocks++
 					} else if (b&mask) != 0 && !secOneFound[bitCount] {
@@ -187,9 +181,9 @@ func Forge() (string, Signature, error) {
 					break
 				}
 			}
-			if i%100000000 == 0 {
+			if rand%100000000 == 0 {
 				elapsed := time.Since(start)
-				fmt.Printf("Tried %d combinations in  %f seconds\n", i, elapsed.Seconds())
+				fmt.Printf("Tried %d combinations in  %f seconds\n", rand, elapsed.Seconds())
 			}
 		}
 		//*/

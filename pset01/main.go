@@ -64,7 +64,6 @@ func main() {
 
 	fmt.Printf("forged msg: %s sig: %s\n", msgString, sig.ToHex())
 
-	return
 }
 
 // Signature systems have 3 functions: GenerateKey(), Sign(), and Verify().
@@ -89,13 +88,13 @@ type PublicKey struct {
 // --- Methods on PublicKey type
 
 // ToHex gives a hex string for a PublicKey. no newline at the end
-func (self PublicKey) ToHex() string {
+func (pubKey PublicKey) ToHex() string {
 	// format is zerohash 0...255, onehash 0...255
 	var s string
-	for _, zero := range self.ZeroHash {
+	for _, zero := range pubKey.ZeroHash {
 		s += zero.ToHex()
 	}
-	for _, one := range self.OneHash {
+	for _, one := range pubKey.OneHash {
 		s += one.ToHex()
 	}
 	return s
@@ -110,7 +109,7 @@ func HexToPubkey(s string) (PublicKey, error) {
 
 	// first, make sure hex string is of correct length
 	if len(s) != expectedLength {
-		return p, fmt.Errorf("Pubkey string %d characters, expect %d", len(s), expectedLength)
+		return p, fmt.Errorf("pubkey string %d characters, expect %d", len(s), expectedLength)
 	}
 
 	// decode from hex to a byte slice
@@ -137,20 +136,20 @@ type Message Block
 // --- Methods on the Block type
 
 // ToHex returns a hex encoded string of the block data, with no newlines.
-func (self Block) ToHex() string {
-	return fmt.Sprintf("%064x", self[:])
+func (block Block) ToHex() string {
+	return fmt.Sprintf("%064x", block[:])
 }
 
 // Hash returns the sha256 hash of the block.
-func (self Block) Hash() Block {
-	return sha256.Sum256(self[:])
+func (block Block) Hash() Block {
+	return sha256.Sum256(block[:])
 }
 
 // IsPreimage returns true if the block is a preimage of the argument.
 // For example, if Y = hash(X), then X.IsPreimage(Y) will return true,
 // and Y.IsPreimage(X) will return false.
-func (self Block) IsPreimage(arg Block) bool {
-	return self.Hash() == arg
+func (block Block) IsPreimage(arg Block) bool {
+	return block.Hash() == arg
 }
 
 // BlockFromByteSlice returns a block from a variable length byte slice.
@@ -169,9 +168,9 @@ type Signature struct {
 }
 
 // ToHex returns a hex string of a signature
-func (self Signature) ToHex() string {
+func (sig Signature) ToHex() string {
 	var s string
-	for _, b := range self.Preimage {
+	for _, b := range sig.Preimage {
 		s += b.ToHex()
 	}
 
@@ -187,7 +186,7 @@ func HexToSignature(s string) (Signature, error) {
 
 	// first, make sure hex string is of correct length
 	if len(s) != expectedLength {
-		return sig, fmt.Errorf("Pubkey string %d characters, expect %d", len(s), expectedLength)
+		return sig, fmt.Errorf("pubkey string %d characters, expect %d", len(s), expectedLength)
 	}
 
 	// decode from hex to a byte slice
@@ -258,7 +257,7 @@ func Sign(msg Message, sec SecretKey) Signature {
 	bitCount := 0
 	for _, b := range msg {
 		for i := 7; i >= 0; i-- {
-			mask := byte(1 << uint(i))
+			mask := byte(1 << i)
 			if (b & mask) == 0 {
 				sig.Preimage[bitCount] = sec.ZeroPre[bitCount]
 			} else {
@@ -281,7 +280,7 @@ func Verify(msg Message, pub PublicKey, sig Signature) bool {
 	bitCount := 0
 	for _, b := range msg {
 		for i := 7; i >= 0; i-- {
-			mask := byte(1 << uint(i))
+			mask := byte(1 << i)
 			if (b&mask) == 0 && sig.Preimage[bitCount].Hash() != pub.ZeroHash[bitCount] {
 				return false
 			} else if (b&mask) != 0 && sig.Preimage[bitCount].Hash() != pub.OneHash[bitCount] {
